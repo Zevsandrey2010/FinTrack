@@ -1,0 +1,13 @@
+{% extends "finance/base.html" %}
+{% block title %}Personal Account | FinTrack{% endblock %}
+{% block content %}
+<header class="topbar"><div><div class="eyebrow">Your profile and account settings</div><h1>Personal Account</h1></div></header>
+<div class="card form-card">
+  <div class="avatar" style="width:58px;height:58px;font-size:22px">{{ display_name|first|upper }}</div>
+  <h2>{{ display_name }}</h2>
+  <p><strong>Username:</strong> {{ user.username }}</p>
+  <p><strong>Email:</strong> {{ user.email|default:"Not provided" }}</p>
+  <p><strong>Account created:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
+  <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secondary" type="submit">Sign out</button></form>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "finance/base.html" %}
+{% block title %}Sign in | FinTrack{% endblock %}
+{% block content %}
+<div class="card form-card" style="margin:50px auto">
+  <div class="brand" style="padding:0 0 10px;color:#172033">Fin<span style="color:#6658e8">Track</span>.</div>
+  <h1>Welcome back</h1><p class="sub">Sign in to your personal finance account.</p>
+  <form method="post">{% csrf_token %}
+    {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="field"><label for="id_username">Username</label>{{ form.username }}</div>
+    <div class="field"><label for="id_password">Password</label>{{ form.password }}</div>
+    <button type="submit">Sign in</button>
+  </form>
+  <p class="sub">Don't have an account? <a href="{% url 'register' %}">Create account</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "finance/base.html" %}
+{% block title %}Home | FinTrack{% endblock %}
+{% block content %}
+<header class="topbar">
+  <div><div class="eyebrow">Good day, {{ display_name }}! Here's your money overview.</div><h1>Expenses & Income</h1></div>
+  <div class="profile"><div class="avatar">{{ display_name|first|upper }}</div><span class="profile-name">{{ display_name }}</span></div>
+</header>
+<section class="stats">
+  <div class="card"><div class="stat-top">This Month <span class="stat-icon">◈</span></div><div class="stat-value">${{ balance|floatformat:2 }}</div><div class="sub">Income minus expenses</div></div>
+  <div class="card"><div class="stat-top">Income <span class="stat-icon">↗</span></div><div class="stat-value positive">+${{ income|floatformat:2 }}</div><div class="sub">Money received this month</div></div>
+  <div class="card"><div class="stat-top">Expenses <span class="stat-icon">↘</span></div><div class="stat-value negative">−${{ expenses|floatformat:2 }}</div><div class="sub">Money spent this month</div></div>
+  <div class="card"><div class="stat-top">Savings Rate <span class="stat-icon">☆</span></div><div class="stat-value">{{ savings_percent }}%</div><div class="sub">Of this month's income saved</div></div>
+</section>
+<div class="toolbar" style="margin:3px 0 16px"><span class="sub">QUICK ACTIONS</span><div class="actions"><button class="income" type="button" onclick="openTransaction('income')">＋ Add Income</button><button class="expense" type="button" onclick="openTransaction('expense')">− Add Expense</button></div></div>
+<section class="card">
+  <div class="card-head"><div><h2 style="margin:0">Categories</h2><div class="sub">Your spending by category this month</div></div><span class="tag">{{ category_totals|length }} categories</span></div>
+  <div class="category-grid">
+  {% for item in category_totals %}
+    <div class="category-tile"><div class="category-icon tile-{{ forloop.counter }}">{% if item.category == 'Food' %}🛒{% elif item.category == 'Transport' %}🚘{% elif item.category == 'Entertainment' %}✨{% elif item.category == 'Health' %}♥{% elif item.category == 'Shopping' %}👕{% elif item.category == 'Coffee' %}☕{% elif item.category == 'Pet' %}🐾{% elif item.category == 'Gifts' %}🎁{% elif item.category == 'Rent & Bills' %}⌂{% elif item.category == 'Subscriptions' %}▶{% else %}•••{% endif %}</div><strong>{{ item.category }}</strong><small>${{ item.total|floatformat:0 }}</small></div>
+  {% empty %}<div class="empty">Your category totals will appear after you add transactions.</div>{% endfor %}
+  </div>
+</section>
+<section class="card">
+  <div class="card-head"><div><h2 style="margin:0">Live Exchange Rates</h2><div class="sub">Updated daily when you open FinTrack</div></div><span class="tag">Daily</span></div>
+  <div class="rate-grid">{% for rate in rates %}<div class="rate"><small>{{ rate.name }} · {{ rate.code }}</small><strong>{% if rate.code == "BTC" %}${{ rate.rate|floatformat:2 }}{% else %}₴{{ rate.rate|floatformat:4 }}{% endif %}</strong><small>per 1 {{ rate.code }} · {{ rate.unit }}</small></div>{% empty %}<div class="sub">Rates are temporarily unavailable. Please check again later.</div>{% endfor %}</div>
+  <div class="sub" style="margin-top:10px">USD, EUR and GBP: National Bank of Ukraine. BTC: CoinGecko. Informational rates only.</div>
+</section>
+<section class="grid2">
+  <div class="card" id="transactions">
+    <div class="card-head"><div><h2 style="margin:0">Recent Transactions</h2><div class="sub">Your latest money activity</div></div><span class="tag">{{ transactions|length }} records</span></div>
+    <div style="overflow-x:auto"><table class="table"><thead><tr><th>TRANSACTION</th><th>CATEGORY</th><th>DATE</th><th style="text-align:right">AMOUNT</th><th></th></tr></thead><tbody>
+    {% for item in transactions %}<tr><td>{{ item.title }}</td><td><span class="tag">{{ item.category }}</span></td><td>{{ item.date|date:"M d, Y" }}</td><td class="amount {% if item.type == 'income' %}positive{% else %}negative{% endif %}">{% if item.type == 'income' %}+{% else %}−{% endif %}${{ item.amount|floatformat:2 }}</td><td><form class="inline-form" method="post" action="{% url 'transaction_delete' item.pk %}">{% csrf_token %}<button class="danger" type="submit" onclick="return confirm('Delete this transaction?')">Delete</button></form></td></tr>
+    {% empty %}<tr><td colspan="5" class="empty">No transactions yet. Use Add Income or Add Expense to get started.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+  <div class="card" id="budgets">
+    <div class="card-head"><div><h2 style="margin:0">Monthly Budgets</h2><div class="sub">Your spending limits</div></div><a class="btn" href="{% url 'budget_create' %}">＋ Add budget</a></div>
+    {% for budget in budgets %}<div class="budget-row"><strong>{{ budget.category }}</strong><span>${{ budget.spent|floatformat:2 }} / ${{ budget.limit|floatformat:2 }} <form class="inline-form" method="post" action="{% url 'budget_delete' budget.id %}">{% csrf_token %}<button class="danger" type="submit" onclick="return confirm('Delete this budget?')">Delete</button></form></span></div><div class="progress"><i style="width:{{ budget.percent }}%"></i></div>
+    {% empty %}<p class="sub">No budgets set for this month yet.</p>{% endfor %}
+  </div>
+</section>
+<div class="modal-backdrop" id="transactionModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" onclick="if(event.target===this)closeTransaction()">
+  <div class="modal"><div class="modal-head"><h2 id="modalTitle">Add Transaction</h2><button class="close" type="button" onclick="closeTransaction()">✕</button></div>
+    <form method="post" action="{% url 'transaction_create' %}">{% csrf_token %}<input type="hidden" name="type" id="transactionType" value="expense">
+      <div class="field"><label for="transactionTitle">Description</label><input id="transactionTitle" name="title" maxlength="70" placeholder="e.g. Grocery shopping" required></div>
+      <div class="field"><label for="transactionCategory">Category</label><select id="transactionCategory" name="category">{% for value,label in category_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="transactionAmount">Amount (USD)</label><input id="transactionAmount" name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required></div>
+      <div class="field"><label for="transactionDate">Date</label><input id="transactionDate" name="date" type="date" value="{% now 'Y-m-d' %}" required></div>
+      <div class="modal-actions"><button class="secondary" type="button" onclick="closeTransaction()">Cancel</button><button type="submit" id="saveTransaction">Save Transaction</button></div>
+    </form>
+  </div>
+</div>
+<script>
+function openTransaction(type){const modal=document.getElementById('transactionModal');const income=type==='income';document.getElementById('transactionType').value=type;document.getElementById('modalTitle').textContent=income?'＋ Add Income':'− Add Expense';document.getElementById('saveTransaction').className=income?'income':'expense';document.getElementById('saveTransaction').textContent=income?'Save Income':'Save Expense';modal.classList.add('open');document.getElementById('transactionTitle').focus()}
+function closeTransaction(){document.getElementById('transactionModal').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTransaction()});
+</script>
+{% endblock %}

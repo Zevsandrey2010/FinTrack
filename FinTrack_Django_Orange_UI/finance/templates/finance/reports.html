@@ -1,0 +1,12 @@
+{% extends "finance/base.html" %}
+{% block title %}Reports | FinTrack{% endblock %}
+{% block content %}
+<header class="topbar"><div><div class="eyebrow">Your complete account summary</div><h1>Reports</h1></div></header>
+<section class="stats">
+  <div class="card"><div class="stat-top">All-time Income</div><div class="stat-value positive">${{ total_income|floatformat:2 }}</div></div>
+  <div class="card"><div class="stat-top">All-time Expenses</div><div class="stat-value negative">${{ total_expenses|floatformat:2 }}</div></div>
+  <div class="card"><div class="stat-top">Net Total</div><div class="stat-value">${{ net_total|floatformat:2 }}</div></div>
+  <div class="card"><div class="stat-top">Transactions</div><div class="stat-value">{{ transaction_count }}</div></div>
+</section>
+<a class="btn secondary" href="{% url 'dashboard' %}">Back to Dashboard</a>
+{% endblock %}

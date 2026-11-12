@@ -1,0 +1,15 @@
+{% extends "finance/base.html" %}
+{% block title %}Create account | FinTrack{% endblock %}
+{% block content %}
+<div class="card form-card" style="margin:30px auto">
+  <div class="brand" style="padding:0 0 10px;color:#172033">Fin<span style="color:#6658e8">Track</span>.</div>
+  <h1>Create your account</h1><p class="sub">Your personal finance space.</p>
+  <form method="post">{% csrf_token %}
+    {% for field in form %}
+      <div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<div class="sub" style="color:#c33">{{ field.errors }}</div>{% endif %}</div>
+    {% endfor %}
+    <button type="submit">Create account</button>
+  </form>
+  <p class="sub">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+</div>
+{% endblock %}
